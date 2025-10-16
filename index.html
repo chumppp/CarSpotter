@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CarScanner</title>
+</head>
+<body style="background:#222;color:#fff;font-family:sans-serif;text-align:center;">
+  <h2>Car Scanner</h2>
+  <video id="video" autoplay playsinline muted style="width:100%;max-width:500px;border-radius:8px;"></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <p id="status">Initializing camera...</p>
+  <button id="snap">Identify Car</button>
+  <p id="result"></p>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const statusEl = document.getElementById('status');
+    const snapBtn = document.getElementById('snap');
+    const resultEl = document.getElementById('result');
+
+    const REGION = 'aus';
+    const API_KEY = '17db202ca1558c793fdb36b316080b827a22aa32';
+
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream; 
+        statusEl.textContent = 'Camera ready';
+      } catch(err) {
+        statusEl.textContent = 'Camera error: ' + err.message;
+      }
+    }
+
+    snapBtn.addEventListener('click', async () => {
+      statusEl.textContent = 'Capturing...';
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      canvas.toBlob(async (blob) => {
+        statusEl.textContent = 'Identifying...';
+        try {
+          const form = new FormData();
+          form.append('service', 'mmr');
+          form.append('image', blob, 'frame.jpg');
+          const resp = await fetch(`https://api.cloud.adaptiverecognition.com/vehicle/${REGION}`, {
+            method: 'POST',
+            headers: { 'X-Api-Key': API_KEY },
+            body: form
+          });
+          const json = await resp.json();
+          statusEl.textContent = 'Result received';
+          showResult(json);
+        } catch(err) {
+          statusEl.textContent = 'API error: ' + err.message;
+        }
+      }, 'image/jpeg', 0.9);
+    });
+
+    function showResult(data) {
+      const v = data?.data?.vehicles?.[0]?.mmr;
+      if (!v || !v.found) return resultEl.textContent = 'No vehicle detected';
+      resultEl.innerHTML = `${v.make || 'Unknown'} ${v.model || ''} (${(v.makeConfidence*100).toFixed(1)}%)`;
+    }
+
+    initCamera();
+  </script>
+</body>
+</html>

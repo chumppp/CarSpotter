@@ -61,8 +61,8 @@
 
     function showResult(data) {
       const v = data?.data?.vehicles?.[0]?.mmr;
-      if (!v || !v.found) return resultEl.textContent = 'No vehicle detected';
-      resultEl.innerHTML = `${v.make || 'Unknown'} ${v.model || ''}`;
+      if (!v || !v.found) return resultEl.textContent = 'No vehicle detected, please reposition and try again';
+      resultEl.innerHTML = `${v.make || 'Unknown vehicle, please reposition and try again'} ${v.model || ''}`;
     }
 
     initCamera();

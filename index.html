@@ -40,7 +40,7 @@
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       canvas.toBlob(async (blob) => {
-        statusEl.textContent = 'Identifying...';
+        statusEl.textContent = 'Identifying, please keep car in frame and camera still';
         try {
           const form = new FormData();
           form.append('service', 'mmr');
